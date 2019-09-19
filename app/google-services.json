@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "962190860436",
+    "firebase_url": "https://ewallet-e4ae3.firebaseio.com",
+    "project_id": "ewallet-e4ae3",
+    "storage_bucket": "ewallet-e4ae3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:962190860436:android:595ff14f6c0549e5071481",
+        "android_client_info": {
+          "package_name": "com.example.ewallet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "962190860436-ano36jj6ghinsam977fsgm9839f2alv1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.ewallet",
+            "certificate_hash": "5646d02d96e04c3ba5680f861cea9e16f10fc332"
+          }
+        },
+        {
+          "client_id": "962190860436-nb9vjhqkf6tmf9i87frg3rt7gg2djjar.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkwmub06dTMgeFYmszLz3x5-FdHQJJhdw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "962190860436-nb9vjhqkf6tmf9i87frg3rt7gg2djjar.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
