@@ -58,11 +58,11 @@ public class CreditCard extends Card {
         return rewards;
     }
 
-    public void setPlace(boolean condition) {
-        isPlace = condition;
+    public void setIsNameGiven(boolean bool) {
+        isPlace = bool;
     }
 
-    public boolean getPlace() {
+    public boolean getIsNameGiven() {
         return isPlace;
     }
 }

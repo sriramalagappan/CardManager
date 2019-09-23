@@ -51,21 +51,21 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             if (!task.isSuccessful()) {
-                                String errorCode = ((FirebaseAuthException) task.getException()).getErrorCode();
+                                //String errorCode = ((FirebaseAuthException) task.getException()).getErrorCode();
                                 UserErrorHandler error = new UserErrorHandler(((FirebaseAuthException) task.getException()).getErrorCode());
-                                toastMessage(error.getErrorResponse());
+                                toastMsg(error.getErrorResponse());
                             } else {
-                                toastMessage("Please check your email for instructions to reset your password");
+                                toastMsg("Please check your email for instructions to reset your password");
                             }
                         }
                     });
                 } else {
-                    toastMessage("Please fill in the email field");
+                    toastMsg("Please fill in the email field");
                 }
             }
         });
     }
-    private void toastMessage(String msg) {
+    private void toastMsg(String msg) {
         Toast.makeText(this,msg,Toast.LENGTH_SHORT).show();
     }
 }

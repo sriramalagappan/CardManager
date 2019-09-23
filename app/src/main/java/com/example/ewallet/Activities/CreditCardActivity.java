@@ -145,12 +145,12 @@ public class CreditCardActivity extends AppCompatActivity {
                 CreditCard creditCard = new CreditCard(txtNameC.getText().toString());
                 creditCard.setCashBack(Integer.parseInt(intCashBackC.getText().toString()));
                 creditCard.setRewards(rewards);
-                creditCard.setPlace(switchPlace.isChecked());
+                creditCard.setIsNameGiven(!switchPlace.isChecked());
 
                 SharedPreferences.Editor prefsEditor = mPrefs.edit();
                 Gson gson = new Gson();
                 String json = gson.toJson(creditCard);
-                prefsEditor.putString("CC " + numCreditCards.toString(), json);
+                prefsEditor.putString("CC" + numCreditCards.toString(), json);
                 prefsEditor.commit();
                 mPrefs.edit().putInt("numCreditCards", (numCreditCards + 1)).commit();
                 sendHome();

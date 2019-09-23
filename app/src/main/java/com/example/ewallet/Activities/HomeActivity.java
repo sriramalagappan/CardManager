@@ -3,21 +3,15 @@ package com.example.ewallet.Activities;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
-
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -26,7 +20,6 @@ import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.example.ewallet.Cards.CreditCard;
 import com.example.ewallet.Cards.OtherCards;
 import com.example.ewallet.R;
@@ -38,14 +31,11 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.gson.Gson;
-
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.CancellationException;
-
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
 public class HomeActivity extends AppCompatActivity {
@@ -54,6 +44,7 @@ public class HomeActivity extends AppCompatActivity {
     Button btnUpdate, btnAddCard;
     SeekBar barDistance;
 
+    //Shared Prefs
     SharedPreferences mPrefs;
 
     //Notification
@@ -68,21 +59,20 @@ public class HomeActivity extends AppCompatActivity {
     //Place Information
     private HashMap<String,String> details;
     private String placeName = " ";
-    int PROXIMITY_RADIUS = 50;
+    private int PROXIMITY_RADIUS = 50;
 
     //Card info
-    Integer numCards;
-    Integer numCreditCards;
-
-    int lengthOfDeets;
-    String[] deets;
+    private Integer numCards;
+    private Integer numCreditCards;
+    private int lengthOfDetails;
+    private String[] placeDetails;
     private String sameName;
 
     private FusedLocationProviderClient mFusedLocationClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        scheduleAlarm();
+        //scheduleAlarm();
 
         mPrefs = this.getSharedPreferences("com.example.ewallet", Context.MODE_PRIVATE);
 
@@ -100,11 +90,14 @@ public class HomeActivity extends AppCompatActivity {
 
         barDistance = findViewById(R.id.barDistance);
 
+        //Initialize Places with API Key
         Places.initialize(getApplicationContext(), "AIzaSyDEiGk3Heoodq_mArpQQU4PZQtIllgwtlU");
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
+        //Get Current Location
         getLastKnownLocation();
 
+        //Get amount of cards
         numCards = mPrefs.getInt("numCards", 0);
         numCreditCards = mPrefs.getInt("numCreditCards", 0);
 
@@ -112,10 +105,11 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 compareCredit();
-                compare();
+                compareGift();
             }
         });
 
+        //Send user to activity to create a new card
         btnAddCard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -123,6 +117,8 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
+        //Change proximity (take out in final version) (only used for testing)
+        //TODO
         barDistance.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -140,14 +136,18 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
+    //Method to create toast msgs
     private void toastMsg(String msg) {
         Toast.makeText(this,msg,Toast.LENGTH_SHORT).show();
     }
 
+    //Get users location
     private void getLastKnownLocation() {
+        //check if permission was granted
         if(ContextCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
+        //If permission is granted, get lat / long coordinates
         mFusedLocationClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
             @Override
             public void onComplete(@NonNull Task<Location> task) {
@@ -155,39 +155,31 @@ public class HomeActivity extends AppCompatActivity {
                     Location location = task.getResult();
                     latitude = location.getLatitude();
                     longitude = location.getLongitude();
-                    if (latitude == 0 || longitude == 0) {
-                        //getLastKnownLocation();
-                    }
                 }
             }
         });
     }
 
-    private String getUrl(double latitude , double longitude , String nearbyPlace)
+    private String getUrl(double latitude , double longitude , String nearbyPlace, boolean isName)
     {
-        StringBuilder googlePlaceUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
-        googlePlaceUrl.append("location="+latitude+","+longitude);
-        googlePlaceUrl.append("&radius="+PROXIMITY_RADIUS);
-        googlePlaceUrl.append("&type="+nearbyPlace);
-        googlePlaceUrl.append("&sensor=true");
-        googlePlaceUrl.append("&key=" + "AIzaSyCrWq_uhXQwi7zFdNjqq60auYdo6IMiGRU");
-
+        StringBuilder googlePlaceUrl;
+        //Create a different url depending on parameter
+        if (isName) {
+            googlePlaceUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/autocomplete/json?");
+            googlePlaceUrl.append("input="+nearbyPlace);
+            googlePlaceUrl.append("&location=" + latitude + "," + longitude);
+            googlePlaceUrl.append("&radius="+PROXIMITY_RADIUS);
+            googlePlaceUrl.append("&strictbounds");
+            googlePlaceUrl.append("&key=" + "AIzaSyCrWq_uhXQwi7zFdNjqq60auYdo6IMiGRU");
+        } else {
+            googlePlaceUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
+            googlePlaceUrl.append("location=" + latitude + "," + longitude);
+            googlePlaceUrl.append("&radius=" + PROXIMITY_RADIUS);
+            googlePlaceUrl.append("&type=" + nearbyPlace);
+            googlePlaceUrl.append("&sensor=true");
+            googlePlaceUrl.append("&key=" + "AIzaSyCrWq_uhXQwi7zFdNjqq60auYdo6IMiGRU");
+        }
         Log.d("HomeActivity", "url = "+googlePlaceUrl.toString());
-
-        return googlePlaceUrl.toString();
-    }
-
-    private String getUrlName (double latitude , double longitude , String nearbyPlace)
-    {
-        StringBuilder googlePlaceUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/autocomplete/json?");
-        googlePlaceUrl.append("input="+nearbyPlace);
-        googlePlaceUrl.append("&location=" + latitude + "," + longitude);
-        googlePlaceUrl.append("&radius="+PROXIMITY_RADIUS);
-        googlePlaceUrl.append("&strictbounds");
-        googlePlaceUrl.append("&key=" + "AIzaSyCrWq_uhXQwi7zFdNjqq60auYdo6IMiGRU");
-
-        Log.d("HomeActivity", "url = "+googlePlaceUrl.toString());
-
         return googlePlaceUrl.toString();
     }
 
@@ -196,36 +188,35 @@ public class HomeActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void getPlace(String str, boolean b) {
+    // bool isName represents whether the program should create a URL to find a
+    // place with a specific name (ex. Target) or to find a general place t
+    // type (ex. grocery store)
+    private void getPlace(String str, boolean isName) {
         Object[] dataUrl = new Object[1];
         GetNearbyLocations getNearbyLocations = new GetNearbyLocations();
 
         String url;
 
-        if (b) {
-            url = getUrl(latitude, longitude, str);
-        } else {
-            url = getUrlName(latitude,longitude,str);
-        }
+        url = getUrl(latitude, longitude, str, isName);
 
         dataUrl[0] = url;
 
+        //Store place details
         try {
             details = getNearbyLocations.execute(dataUrl).get();
             placeName = details.get("place_name");
-            lengthOfDeets = Integer.parseInt(details.get("length"));
-            deets = new String[lengthOfDeets];
-            for (int i = 0; i < lengthOfDeets; i++) {
-                deets[i] = details.get("" + i);
+            lengthOfDetails = Integer.parseInt(details.get("length"));
+            placeDetails = new String[lengthOfDetails];
+            for (int i = 0; i < lengthOfDetails; i++) {
+                placeDetails[i] = details.get("" + i);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void compare() {
+    private void compareGift() {
         getLastKnownLocation();
-        Log.d("HomeActivity", numCards.toString());
         if (isLocation) {
             for (Integer i = 0; i < numCards; i++) {
                 String key = i.toString();
@@ -233,20 +224,13 @@ public class HomeActivity extends AppCompatActivity {
                 String json = mPrefs.getString(key, null);
                 OtherCards card = gson.fromJson(json, OtherCards.class);
 
-                getPlace(card.getLocation(), false);
-
-                //toastMsg(numCards + " " + placeName + " " + card.getLocation());
+                getPlace(card.getLocation(), true);
 
                 if (placeName.contains(card.getLocation())) {
-                    displayNotification(card.getName());
-                    txtCardName.setText(card.getName());
-                    txtCardLocation.setText(card.getLocation());
-                    txtCardPoints.setText("" + card.getCashBack());
-                    txtCardCashBack.setText("");
+                    setUIText(card.getName(), card.getLocation(), "", "" + card.getCashBack());
                 } else {
-                    //btnUpdate.setText(placeName);
+                    toastMsg("No matches were found");
                 }
-                Log.d("asd", numCards.toString());
             }
         }
     }
@@ -255,46 +239,32 @@ public class HomeActivity extends AppCompatActivity {
         getLastKnownLocation();
         if (isLocation) {
             for (Integer i = 0; i < numCreditCards; i++) {
-                String key = "CC " + i.toString();
+                String key = "CC" + i.toString();
                 Gson gson = new Gson();
                 String json = mPrefs.getString(key, null);
                 CreditCard card = gson.fromJson(json, CreditCard.class);
                 List<Object[]> temp = card.getRewards();
-                if (card.getPlace()) {
-                    for (int j = 0; j < temp.size(); j++) {
-                        Object[] obj = temp.get(j);
-                        getPlace(obj[2].toString(), true);
-                        double start = (double) (obj[0]);
-                        double end = (double) (obj[1]);
-                        if (isDate((int)start, (int)end)) {
-                            for (int k = 0; k < lengthOfDeets; k++) {
-                                if (obj[2].toString().equals(deets[k])) {
-                                    displayNotification(card.getName());
-                                    txtCardName.setText(card.getName());
-                                    txtCardLocation.setText(obj[2].toString());
-                                    txtCardPoints.setText(obj[3].toString());
-                                    txtCardCashBack.setText(card.getCashBack());
+
+                for (int j = 0; j < temp.size(); j++) {
+                    Object[] obj = temp.get(j);
+                    String place = obj[2].toString();
+                    double start = (double) (obj[0]);
+                    double end = (double) (obj[1]);
+                    if (isDate((int)start, (int)end)) {
+                        if (card.getIsNameGiven()) {
+                            getPlace(place, true);
+                            if (placeName.contains(place)) {
+                                setUIText(card.getName(), place, obj[3].toString(), "" + card.getCashBack());
+                            } else {
+                                toastMsg("No matches were found");
+                            }
+                        } else {
+                            getPlace(place, false);
+                            for (int k = 0; k < lengthOfDetails; k++) {
+                                if (place.equals(placeDetails[k])) {
+                                    setUIText(card.getName(), place, obj[3].toString(), "" + card.getCashBack());
                                 }
                             }
-                        }
-                    }
-                } else {
-                    for (int j = 0; j < temp.size(); j++) {
-                        Object[] obj = temp.get(j);
-                        getPlace(obj[2].toString(), false);
-                        double start = (double) (obj[0]);
-                        double end = (double) (obj[1]);
-                        if (isDate((int)start, (int)end)) {
-                            if (placeName.contains(obj[2].toString())) {
-                                txtCardName.setText(card.getName());
-                                txtCardLocation.setText(obj[2].toString());
-                                txtCardPoints.setText(obj[3].toString());
-                                txtCardCashBack.setText("" + card.getCashBack());
-                                displayNotification(card.getName());
-                            } else {
-                                //TODO
-                            }
-
                         }
                     }
                 }
@@ -325,11 +295,19 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    public void scheduleAlarm() {
+    /*public void scheduleAlarm() {
         Intent intent = new Intent(getApplicationContext(), AlarmReciever.class);
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, AlarmReciever.REQUEST_CODE,
                 intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
+    }*/
+
+    public void setUIText(String cardName, String cardLocation, String cardPoints, String cardCashBack) {
+        txtCardName.setText(cardName);
+        txtCardLocation.setText(cardLocation);
+        txtCardPoints.setText(cardPoints);
+        txtCardCashBack.setText(cardCashBack);
+        displayNotification(cardName);
     }
 
     private boolean isDate(int start, int end) {

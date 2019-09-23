@@ -251,7 +251,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     //Activities
     public void openRegisterActivity() {
         Intent intent = new Intent(this, RegisterActivity.class);
