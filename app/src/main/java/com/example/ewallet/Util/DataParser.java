@@ -71,15 +71,16 @@ public class DataParser {
 
             placeMap = getPlace((JSONObject) jsonArray.get(0));
         } catch (JSONException e) {
-            try {
-                jsonObject = new JSONObject(jsonData);
-                jsonArray = jsonObject.getJSONArray("predictions");
+            e.printStackTrace();
+        }
 
-                placeMap = getPlace((JSONObject) jsonArray.get(0));
-            } catch (JSONException s){
-                e.printStackTrace();
-                s.printStackTrace();
-            }
+        try {
+            jsonObject = new JSONObject(jsonData);
+            jsonArray = jsonObject.getJSONArray("predictions");
+
+            placeMap = getPlace((JSONObject) jsonArray.get(0));
+        } catch (JSONException s){
+            s.printStackTrace();
         }
 
         return placeMap;
